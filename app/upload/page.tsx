@@ -1,22 +1,58 @@
 "use client";
+import { prepare } from "@/actions/prepare";
+import PDFFileUpload, { FileProps } from "@/components/PDFFileUploader";
+import { Button } from "@/components/ui/button";
+import { PDFSource } from "@/lib/pdf-loader";
 
-import { UploadButton } from "@/lib/uploadthing";
+import { Loader2 } from "lucide-react";
+import React, { useState } from "react";
 
-export default function Home() {
+export default function Page() {
+  const [file, setFile] = useState<FileProps | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [loadingMsg, setLoadingMsg] = useState("");
+  async function submit() {
+    try {
+      setLoading(true);
+      setLoadingMsg("Initializing Client and creating index...");
+
+      const pdfSource: PDFSource = {
+        type: "url",
+        source: file?.url ?? "",
+      };
+      await prepare(pdfSource);
+      setLoading(false);
+    } catch (error) {
+      setLoading(false);
+      setLoadingMsg("");
+      console.log(error);
+    }
+  }
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <UploadButton
-        endpoint="imageUploader"
-        onClientUploadComplete={(res) => {
-          // Do something with the response
-          console.log("Files: ", res);
-          alert("Upload Completed");
-        }}
-        onUploadError={(error: Error) => {
-          // Do something with the error.
-          alert(`ERROR! ${error.message}`);
-        }}
-      />
-    </main>
+    <div>
+      <div className="flex flex-1 py-16">
+        <div className="w-full max-w-2xl mx-auto">
+          {file ? (
+            <>
+              {loading ? (
+                <Button disabled>
+                  <Loader2 className="animate-spin" />
+                  {loadingMsg}
+                </Button>
+              ) : (
+                <Button onClick={() => submit()}>Upload to Pine cone</Button>
+              )}
+            </>
+          ) : (
+            <PDFFileUpload
+              label="Upload your Knowledge Base PDF"
+              file={file}
+              setFile={setFile}
+              endpoint="pdfUpload"
+            />
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
